@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/constants/colors.dart';
 import 'package:frontend/widgets/appBar.dart';
 import 'package:http/http.dart' as http;
 import 'package:pie_chart/pie_chart.dart';
@@ -6,6 +7,7 @@ import 'dart:convert';
 
 import '../constants/api.dart';
 import '../model/todo.dart';
+import '../widgets/bottom_sheet.dart';
 import '../widgets/todo_container.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,6 +20,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int done = 0;
   int incomplete = 0;
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
   List<ToDo> myTodos = [];
   bool isLoading = true;
@@ -84,10 +88,39 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void postData({
+    String title = '',
+    String description = '',
+    bool completed = false,
+  }) async {
+    try {
+      http.Response response = await http.post(Uri.parse(api),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, dynamic>{
+            'title': titleController.text,
+            'description': descriptionController.text,
+            'completed': false,
+          }));
+      if (response.statusCode == 201) {
+        setState(() {
+          myTodos = [];
+        });
+        fetchData();
+      } else {
+        print("error");
+      }
+      print(response.body);
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF001133),
+      backgroundColor:bg,
       appBar: customAppBar(),
       body: isLoading
           ? const Center(
@@ -135,6 +168,13 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+      floatingActionButton: CustomElevatedSheet(
+        titlecontroller: titleController,
+        desccontroller: descriptionController,
+        onPressed: () {
+          postData();
+        },
+      ),
     );
   }
 }
